@@ -36,13 +36,33 @@ def forward_backward_prop(data, labels, params, dimensions):
     b2 = np.reshape(params[ofs:ofs + Dy], (1, Dy))
 
     ### YOUR CODE HERE: forward propagation
-    raise NotImplementedError
+    z1 = np.dot(data, W1) + b1
+    h = sigmoid(z1)
+    logits = np.dot(h, W2) + b2
+    probas = softmax(logits)
+    cost = - np.sum(np.log(probas) * labels)
     ### END YOUR CODE
 
     ### YOUR CODE HERE: backward propagation
-    raise NotImplementedError
-    ### END YOUR CODE
 
+    ### 1. Last layer
+    # error at the last layer
+    gradcost = probas - labels # or gradz2
+    # update neurons at last layer using input and error of last layer
+    gradW2 = np.dot(h.T, gradcost) # H x Dy
+    gradb2 = np.sum(gradcost, axis=0).reshape(1,-1) # 1 x Dy
+
+    ### 2. Hidden layer
+    #compute error at hidden layer using gradient comming from last layer
+    gradh = gradcost.dot(W2.T)
+    #IMPORTANT: here we the element-wise multiplication because when deriving the composition sigmoid(z1=h.W2 + b2),
+    #sigmoid() is consider as a single variable function of z1.
+    gradz1 = gradh * sigmoid_grad(h)
+
+    # update the neurons of the hidden layer using input and error of hidden layer
+    gradW1 = np.dot(data.T, gradz1) # Dx x 1
+    gradb1 = np.sum(gradz1, axis=0).reshape(1,-1) # 1 x H
+    # ### END YOUR CODE
     ### Stack gradients (do not modify)
     grad = np.concatenate((gradW1.flatten(), gradb1.flatten(),
         gradW2.flatten(), gradb2.flatten()))
@@ -86,4 +106,4 @@ def your_sanity_checks():
 
 if __name__ == "__main__":
     sanity_check()
-    your_sanity_checks()
+    #your_sanity_checks()
