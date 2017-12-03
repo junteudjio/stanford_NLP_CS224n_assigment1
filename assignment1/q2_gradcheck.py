@@ -30,7 +30,13 @@ def gradcheck_naive(f, x):
         # to test cost functions with built in randomness later.
 
         ### YOUR CODE HERE:
-        raise NotImplementedError
+        random.setstate(rndstate)
+        fx_plus_h, _ = f(x[ix] + h)
+
+        random.setstate(rndstate)
+        fx_minus_h, _ = f(x[ix] - h)
+
+        numgrad = (fx_plus_h - fx_minus_h) / (2. * h)
         ### END YOUR CODE
 
         # Compare gradients
@@ -69,7 +75,31 @@ def your_sanity_checks():
     """
     print "Running your sanity checks..."
     ### YOUR CODE HERE
-    raise NotImplementedError
+    log = lambda x: (np.log(x), 1./x)
+    exp = lambda x: (np.exp(x), np.exp(x))
+    linear = lambda x: (np.array(2. * x + 1.), 2. * np.ones(x.shape))
+    const = lambda x: (np.ones(x.shape), np.zeros(x.shape))
+    sin = lambda x: (np.sin(x), np.cos(x))
+
+    gradcheck_naive(log, np.array(123.456))  # scalar test
+    gradcheck_naive(log, np.random.randn(3, ))  # 1-D test
+    gradcheck_naive(log, np.random.randn(4, 5))  # 2-D test
+
+    gradcheck_naive(exp, np.array(123.456))  # scalar test
+    gradcheck_naive(exp, np.random.randn(3, ))  # 1-D test
+    gradcheck_naive(exp, np.random.randn(4, 5))  # 2-D test
+
+    gradcheck_naive(linear, np.array(123.456))  # scalar test
+    gradcheck_naive(linear, np.random.randn(3, ))  # 1-D test
+    gradcheck_naive(linear, np.random.randn(4, 5))  # 2-D test
+
+    gradcheck_naive(const, np.array(123.456))  # scalar test
+    gradcheck_naive(const, np.random.randn(3, ))  # 1-D test
+    gradcheck_naive(const, np.random.randn(4, 5))  # 2-D test
+
+    gradcheck_naive(sin, np.array(123.456))  # scalar test
+    gradcheck_naive(sin, np.random.randn(3, ))  # 1-D test
+    gradcheck_naive(sin, np.random.randn(4, 5))  # 2-D test
     ### END YOUR CODE
 
 
