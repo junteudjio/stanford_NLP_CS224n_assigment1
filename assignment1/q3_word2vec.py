@@ -79,21 +79,18 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     # Again this is allowed because softmax is invariant to shift. softmax(x) = softmax(x + c)
 
     all_outputvectors_scores = U.dot(V_c) #--> |V| x 1
-    max_score = np.max(all_outputvectors_scores) #--> 1 x 1 , scalar
-    all_outputvectors_scores = all_outputvectors_scores - max_score #--> |V| x 1
-    all_outputvectors_softmax = np.exp(all_outputvectors_scores) # --> |V| x 1
+    all_outputvectors_softmax = softmax(all_outputvectors_scores.T).T
     del all_outputvectors_scores
-    all_outputvectors_softmax = all_outputvectors_softmax / np.sum(all_outputvectors_softmax) # --> |V| x 1
-    # NOTE: we could also leverage on previous work like this (But we are here to learn so we re-implement):
-    # all_outputvectors_softmax = softmax(all_outputvectors_scores.T).T
     #-----
 
     # STEP 2: cost = - log (softmax(target))
     cost = -1. * np.log(all_outputvectors_softmax[target, :]) #--> 1 x 1 , scalar
+    cost = np.asscalar(cost)
     #-----
 
     # STEP 3: gradPed = grad_Cost__wrt__V_c = -1 * U_o + sum_w( U_w * softmax(U_w) )
     gradPred = -1.*U_o + all_outputvectors_softmax.T.dot(U) #--> 1 x D
+    gradPred = gradPred.reshape(predicted_orig_shape)
     #-----
 
     # STEP 4: grad : grad_Cost__wrt__all_outputvectors
@@ -101,12 +98,13 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     grad = all_outputvectors_softmax.dot(V_c.T) #--> |V| x D : each row is the gradient wrt to an output vector
 
     #now we replace the row for the particular case of the targeted output
-    grad[target, :] = (1. - all_outputvectors_softmax[target, :]).dot(V_c.T)
-    predicted = predicted.reshape(predicted_orig_shape)
-    outputVectors = outputVectors.reshape(outputVectors_orig_shape)
+    grad[target, :] = (all_outputvectors_softmax[target, :] - 1.).dot(V_c.T)
+    grad = grad.reshape(outputVectors_orig_shape)
     #-----
-    ### END YOUR CODE
 
+    assert predicted_orig_shape == gradPred.shape
+    assert outputVectors_orig_shape == outputVectors.shape
+    ### END YOUR CODE
     return cost, gradPred, grad
 
 
@@ -166,6 +164,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
 
     # STEP 2: cost = -log(target_word_sigmoid) - sum( neg_words_sigmoids)
     cost = -1.*np.log(np.sum(targetword_and_negwords_sigmoids))
+    cost = np.asscalar(cost)
     # -----
 
     # STEP 3: gradPed = grad_Cost__wrt__V_c
@@ -295,9 +294,9 @@ def cbow(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     #                               This partial_gradOut to N+1 x D : where N is the number of negative sample
     #                               The extra +1 been added to take into account the gradient of the true context outvector
 
-    cost = partial_cost
-    gradIn[context_words_indices] = partial_gradIn  # numpy broadcast happens here
-    gradOut = partial_gradOut
+    cost += partial_cost
+    gradIn[context_words_indices] = gradIn[context_words_indices] + partial_gradIn  # numpy broadcast happens here
+    gradOut += partial_gradOut
 
     ### END YOUR CODE
 
