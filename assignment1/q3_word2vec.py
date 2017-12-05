@@ -138,7 +138,38 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     indices.extend(getNegativeSamples(target, dataset, K))
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+    # STEP 0: first let's make the notations consitent with the course and written assignments
+    # let D=dimension of hidden layer, |V|=number of tokens in outputvectors, N=number of negative words
+    V_c = predicted.reshape(-1, 1)  # the input vector of predicted word --> D x 1
+    U = outputVectors.reshape(-1, V_c.shape[0])  # ALL the output vectors --> |V| x D
+    U_o = U[target]  # the output vector of predicted word --> 1 x D
+    U_negs = U[indices[1:]] # --> N x D
+    # -----
+
+    # STEP 1: since the sigmoids of target & all negative samples is needed many times we'll compute and save them
+    # Let get the scores first: positive for the target word and negative for the negative word
+    targetword_and_negwords_scores = -1 * U[indices].dot(V_c) #--> N+1 x 1
+    targetword_and_negwords_scores[0] = -1 * targetword_and_negwords_scores[0]
+    targetword_and_negwords_sigmoids = sigmoid(targetword_and_negwords_scores) #--> N+1 x 1
+    del targetword_and_negwords_scores
+    target_sigmoid = targetword_and_negwords_sigmoids[0] #--> 1 x 1, scalar
+    neg_sigmoids = targetword_and_negwords_sigmoids[1:] #--> N x 1
+    # -----
+
+    # STEP 2: cost = -log(target_word_sigmoid) - sum( neg_words_sigmoids)
+    cost = -1.*np.log(np.sum(targetword_and_negwords_sigmoids))
+    # -----
+
+    # STEP 3: gradPed = grad_Cost__wrt__V_c
+    gradPred = (target_sigmoid -1.) * U_o + (1 - neg_sigmoids).T.dot(U_negs) #--> 1 x D
+    # -----
+
+    # STEP 4: grad = grad_Cost_wrt_negs_and_target_words_outputvectors
+    grad = (1. - targetword_and_negwords_sigmoids).dot(V_c.T) #--> N+1 x D
+    # we negate the grad for the target word as  we found in the formula
+    grad[0] = -grad[0]
+    # -----
+
     ### END YOUR CODE
 
     return cost, gradPred, grad
