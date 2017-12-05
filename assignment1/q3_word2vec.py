@@ -69,7 +69,7 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     # let D=dimension of hidden layer |V|=number of tokens in outputvectors
     V_c = predicted.reshape(-1,1) # the input vector of predicted word --> D x 1
     U = outputVectors.reshape(-1, V_c.shape[0]) # ALL the output vectors --> |V| x D
-    U_o = U[target]  # the output vector of predicted word --> 1 x D
+    U_o = U[target, :]  # the output vector of predicted word --> 1 x D
     #-----
 
     # STEP 1: since the softmax output value of all outputvectors is needed to compute all returned values
@@ -85,11 +85,11 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     del all_outputvectors_scores
     all_outputvectors_softmax = all_outputvectors_softmax / np.sum(all_outputvectors_softmax) # --> |V| x 1
     # NOTE: we could also leverage on previous work like this (But we are here to learn so we re-implement):
-    # all_outputvectors_softmax = softmax(all_outputvectors_scores)
+    # all_outputvectors_softmax = softmax(all_outputvectors_scores.T).T
     #-----
 
     # STEP 2: cost = - log (softmax(target))
-    cost = -1. * np.log(all_outputvectors_softmax[target]) #--> 1 x 1 , scalar
+    cost = -1. * np.log(all_outputvectors_softmax[target, :]) #--> 1 x 1 , scalar
     #-----
 
     # STEP 3: gradPed = grad_Cost__wrt__V_c = -1 * U_o + sum_w( U_w * softmax(U_w) )
@@ -101,8 +101,7 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     grad = all_outputvectors_softmax.dot(V_c.T) #--> |V| x D : each row is the gradient wrt to an output vector
 
     #now we replace the row for the particular case of the targeted output
-    grad[target] = (1. - all_outputvectors_softmax[target]).dot(V_c.T)
-
+    grad[target, :] = (1. - all_outputvectors_softmax[target, :]).dot(V_c.T)
     predicted = predicted.reshape(predicted_orig_shape)
     outputVectors = outputVectors.reshape(outputVectors_orig_shape)
     #-----
@@ -151,7 +150,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     # let D=dimension of hidden layer, |V|=number of tokens in outputvectors, N=number of negative words
     V_c = predicted.reshape(-1, 1)  # the input vector of predicted word --> D x 1
     U = outputVectors.reshape(-1, V_c.shape[0])  # ALL the output vectors --> |V| x D
-    U_o = U[target]  # the output vector of predicted word --> 1 x D
+    U_o = U[target].reshape(1, -1)  # the output vector of predicted word --> 1 x D
     U_negs = U[indices[1:]] # --> N x D
     # -----
 
@@ -178,7 +177,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     grad_target_and_negs = (1. - targetword_and_negwords_sigmoids).dot(V_c.T) #--> N+1 x D
     # we negate the grad for the target word as  we found in the formula
     grad_target_and_negs[0] = -grad_target_and_negs[0]
-    grad[indices] = grad_target_and_negs
+    grad[indices, :] = grad_target_and_negs
 
     predicted = predicted.reshape(predicted_orig_shape)
     outputVectors = outputVectors.reshape(outputVectors_orig_shape)
@@ -226,7 +225,7 @@ def skipgram(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     context_words_indices = [tokens[context_word] for context_word in contextWords]
     context_words_output_vectors = outputVectors[context_words_indices]
     current_word_idx = tokens[currentWord]
-    current_word_input_vector = inputVectors[current_word_idx]
+    current_word_input_vector = inputVectors[current_word_idx, :]
 
     # STEP 1: call the binary cost and grad computer function for each per of:
     # (current_input_word, context_output_word) and accumulate the costs and gradients
@@ -244,7 +243,7 @@ def skipgram(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
         #                               The extra +1 been added to take into account the gradient of the true context outvector
 
         cost += partial_cost
-        gradIn[current_word_idx]+= partial_gradIn
+        gradIn[current_word_idx, :] = gradIn[current_word_idx, :] + partial_gradIn
         gradOut += partial_gradOut
     ### END YOUR CODE
 
@@ -275,16 +274,16 @@ def cbow(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
 
     # STEP 0: get context  words indices and INPUT vectors ;  currentWord index and OUTPUT vector
     context_words_indices = [tokens[context_word] for context_word in contextWords]
-    context_words_input_vectors = inputVectors[context_words_indices]
+    context_words_input_vectors = inputVectors[context_words_indices, :]
     current_word_idx = tokens[currentWord]
     current_word_out_vector = outputVectors[current_word_idx]
 
-    context_words_input_vectors_avg = np.mean(context_words_input_vectors, axis=0) #--> 1 x D
+    context_words_input_vectors_avg = np.sum(context_words_input_vectors, axis=0) #--> 1 x D
 
 
     # STEP 1: accumulate the gradient (well, we accumulate only once)
     partial_cost, partial_gradIn, partial_gradOut = word2vecCostAndGradient(predicted=context_words_input_vectors_avg,
-                                                                            target=current_word_out_vector,
+                                                                            target=current_word_idx,
                                                                             outputVectors=outputVectors,
                                                                             dataset=dataset)
 
@@ -383,4 +382,4 @@ def test_word2vec():
 
 if __name__ == "__main__":
     test_normalize_rows()
-    #test_word2vec()
+    test_word2vec()
