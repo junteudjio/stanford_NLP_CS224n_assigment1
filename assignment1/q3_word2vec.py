@@ -163,7 +163,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     # -----
 
     # STEP 2: cost = -log(target_word_sigmoid) - sum( neg_words_sigmoids)
-    cost = -1.*np.log(np.sum(targetword_and_negwords_sigmoids))
+    cost = -1.*np.sum(np.log(targetword_and_negwords_sigmoids))
     cost = np.asscalar(cost)
     # -----
 
@@ -173,15 +173,14 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     # -----
 
     # STEP 4: grad = grad_Cost_wrt_negs_and_target_words_outputvectors, gradient of not(target or negs) are zero
-    grad = np.zeros(U.shape) #--> --> |V| x D
+    grad = np.zeros(U.shape) #--> |V| x D
     grad_target_and_negs = (1. - targetword_and_negwords_sigmoids).dot(V_c.T) #--> N+1 x D
     # we negate the grad for the target word as  we found in the formula
-    grad_target_and_negs[0] = -grad_target_and_negs[0]
+    grad_target_and_negs[0] *= -1
     for idx, global_idx in enumerate(indices):
         grad[global_idx, :] += grad_target_and_negs[idx, :]
     grad = grad.reshape(outputVectors_orig_shape)
     # -----
-    #print grad
     ### END YOUR CODE
 
     return cost, gradPred, grad
