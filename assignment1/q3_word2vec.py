@@ -62,7 +62,45 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     """
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+
+    # STEP 0: first let's make the notations consitent with the course and written assignments
+    # let D=dimension of hidden layer |V|=number of tokens in outputvectors
+    V_c = predicted.reshape(-1,1) # the input vector of predicted word --> D x 1
+    U = outputVectors.reshape(-1, V_c.shape[0]) # ALL the output vectors --> |V| x D
+    U_o = U[target]  # the output vector of predicted word --> 1 x D
+    #-----
+
+    # STEP 1: since the softmax output value of all outputvectors is needed to compute all returned values
+    # we compute it once and save its value to use it multiple times
+
+    # Like in question 1, we remove the max_score before doing exp to avoid too large values and hence enhance numericall stability.
+    # Again this is allowed because softmax is invariant to shift. softmax(x) = softmax(x + c)
+
+    all_outputvectors_scores = U.dot(V_c) #--> |V| x 1
+    max_score = np.max(all_outputvectors_scores) #--> 1 x 1 , scalar
+    all_outputvectors_scores = all_outputvectors_scores - max_score #--> |V| x 1
+    all_outputvectors_softmax = np.exp(all_outputvectors_scores) # --> |V| x 1
+    del all_outputvectors_scores
+    all_outputvectors_softmax = all_outputvectors_softmax / np.sum(all_outputvectors_softmax) # --> |V| x 1
+    # NOTE: we could also leverage on previous work like this (But we are here to learn so we re-implement):
+    # all_outputvectors_softmax = softmax(all_outputvectors_scores)
+    #-----
+
+    # STEP 2: cost = - log (softmax(target))
+    cost = -1. * np.log(all_outputvectors_softmax[target]) #--> 1 x 1 , scalar
+    #-----
+
+    # STEP 3: gradPed = grad_Cost__wrt__V_c = -1 * U_o + sum_w( U_w * softmax(U_w) )
+    gradPred = -1.*U_o + all_outputvectors_softmax.T.dot(U) #--> 1 x D
+    #-----
+
+    # STEP 4: grad : grad_Cost__wrt__all_outputvectors
+    # for all output vectors (expect the target vector) the gradient is:
+    grad = all_outputvectors_softmax.dot(V_c.T) #--> |V| x D : each row is the gradient wrt to an output vector
+
+    #now we replace the row for the particular case of the targeted output
+    grad[target] = (1. - all_outputvectors_softmax[target]).dot(V_c.T)
+    #-----
     ### END YOUR CODE
 
     return cost, gradPred, grad
