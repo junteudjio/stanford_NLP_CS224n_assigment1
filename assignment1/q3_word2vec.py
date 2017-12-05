@@ -15,7 +15,11 @@ def normalizeRows(x):
     """
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+    # we first compute each row norm
+    per_row_norm = np.sqrt(np.sum(np.square(x), axis=1)).reshape(-1,1)
+
+    # now we divide each value of each row by the row's norm
+    x = x / per_row_norm
     ### END YOUR CODE
 
     return x
@@ -239,4 +243,4 @@ def test_word2vec():
 
 if __name__ == "__main__":
     test_normalize_rows()
-    test_word2vec()
+    #test_word2vec()
