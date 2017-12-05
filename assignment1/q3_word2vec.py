@@ -154,7 +154,7 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
 
     # STEP 1: since the sigmoids of target & all negative samples is needed many times we'll compute and save them
     # Let get the scores first: positive for the target word and negative for the negative word
-    targetword_and_negwords_scores = -1 * U[indices].dot(V_c) #--> N+1 x 1
+    targetword_and_negwords_scores = -1 * U[indices, :].dot(V_c) #--> N+1 x 1
     targetword_and_negwords_scores[0] = -1 * targetword_and_negwords_scores[0]
     targetword_and_negwords_sigmoids = sigmoid(targetword_and_negwords_scores) #--> N+1 x 1
     del targetword_and_negwords_scores
@@ -168,7 +168,8 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     # -----
 
     # STEP 3: gradPed = grad_Cost__wrt__V_c
-    gradPred = (target_sigmoid -1.) * U_o + (1 - neg_sigmoids).T.dot(U_negs) #--> 1 x D
+    gradPred = (target_sigmoid -1.) * U_o + (1. - neg_sigmoids).T.dot(U_negs) #--> 1 x D
+    gradPred = gradPred.reshape(predicted_orig_shape)
     # -----
 
     # STEP 4: grad = grad_Cost_wrt_negs_and_target_words_outputvectors, gradient of not(target or negs) are zero
@@ -176,12 +177,11 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     grad_target_and_negs = (1. - targetword_and_negwords_sigmoids).dot(V_c.T) #--> N+1 x D
     # we negate the grad for the target word as  we found in the formula
     grad_target_and_negs[0] = -grad_target_and_negs[0]
-    grad[indices, :] = grad_target_and_negs
-
-    predicted = predicted.reshape(predicted_orig_shape)
-    outputVectors = outputVectors.reshape(outputVectors_orig_shape)
+    for idx, global_idx in enumerate(indices):
+        grad[global_idx, :] += grad_target_and_negs[idx, :]
+    grad = grad.reshape(outputVectors_orig_shape)
     # -----
-
+    #print grad
     ### END YOUR CODE
 
     return cost, gradPred, grad
@@ -295,10 +295,12 @@ def cbow(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     #                               The extra +1 been added to take into account the gradient of the true context outvector
 
     cost += partial_cost
-    gradIn[context_words_indices] = gradIn[context_words_indices] + partial_gradIn  # numpy broadcast happens here
+    for idx in context_words_indices:
+        gradIn[idx] += partial_gradIn
     gradOut += partial_gradOut
 
     ### END YOUR CODE
+
 
     return cost, gradIn, gradOut
 
