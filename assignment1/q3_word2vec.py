@@ -269,7 +269,37 @@ def cbow(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     gradOut = np.zeros(outputVectors.shape)
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+    assert 2 * C >= len(contextWords)
+
+    ##### for the cbow one 2 * C vectors In --> one vector Out #####
+
+    # STEP 0: get context  words indices and INPUT vectors ;  currentWord index and OUTPUT vector
+    context_words_indices = [tokens[context_word] for context_word in contextWords]
+    context_words_input_vectors = inputVectors[context_words_indices]
+    current_word_idx = tokens[currentWord]
+    current_word_out_vector = outputVectors[current_word_idx]
+
+    context_words_input_vectors_avg = np.mean(context_words_input_vectors, axis=0) #--> 1 x D
+
+
+    # STEP 1: accumulate the gradient (well, we accumulate only once)
+    partial_cost, partial_gradIn, partial_gradOut = word2vecCostAndGradient(predicted=context_words_input_vectors_avg,
+                                                                            target=current_word_out_vector,
+                                                                            outputVectors=outputVectors,
+                                                                            dataset=dataset)
+
+    # SHAPES:
+    # partial_cost : 1 x 1, scalar
+    # pratial_gradIn : 1 x D --> we update only one row : the current_word_input_vector
+    # partial_gradOut : |V| x D --> we update all output vectors rows; However in the case of negSamplingCostAndGradient,
+    #                               If we knew which words were choosen as negative we could have reduce the size of
+    #                               This partial_gradOut to N+1 x D : where N is the number of negative sample
+    #                               The extra +1 been added to take into account the gradient of the true context outvector
+
+    cost = partial_cost
+    gradIn[context_words_indices] = partial_gradIn  # numpy broadcast happens here
+    gradOut = partial_gradOut
+
     ### END YOUR CODE
 
     return cost, gradIn, gradOut
