@@ -62,6 +62,8 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     """
 
     ### YOUR CODE HERE
+    predicted_orig_shape = predicted.shape
+    outputVectors_orig_shape = outputVectors.shape
 
     # STEP 0: first let's make the notations consitent with the course and written assignments
     # let D=dimension of hidden layer |V|=number of tokens in outputvectors
@@ -100,6 +102,9 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
 
     #now we replace the row for the particular case of the targeted output
     grad[target] = (1. - all_outputvectors_softmax[target]).dot(V_c.T)
+
+    predicted = predicted.reshape(predicted_orig_shape)
+    outputVectors = outputVectors.reshape(outputVectors_orig_shape)
     #-----
     ### END YOUR CODE
 
@@ -138,6 +143,10 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     indices.extend(getNegativeSamples(target, dataset, K))
 
     ### YOUR CODE HERE
+    predicted_orig_shape = predicted.shape
+    outputVectors_orig_shape = outputVectors.shape
+
+
     # STEP 0: first let's make the notations consitent with the course and written assignments
     # let D=dimension of hidden layer, |V|=number of tokens in outputvectors, N=number of negative words
     V_c = predicted.reshape(-1, 1)  # the input vector of predicted word --> D x 1
@@ -170,6 +179,9 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     # we negate the grad for the target word as  we found in the formula
     grad_target_and_negs[0] = -grad_target_and_negs[0]
     grad[indices] = grad_target_and_negs
+
+    predicted = predicted.reshape(predicted_orig_shape)
+    outputVectors = outputVectors.reshape(outputVectors_orig_shape)
     # -----
 
     ### END YOUR CODE
@@ -206,7 +218,34 @@ def skipgram(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     gradOut = np.zeros(outputVectors.shape)
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+    assert 2*C >= len(contextWords)
+
+    ##### for the skipgram one vector In --> 2*C vectors Out #####
+
+    # STEP 0: get context  words indices and OUTPUT vectors ;  currentWord index and INPUT vector
+    context_words_indices = [tokens[context_word] for context_word in contextWords]
+    context_words_output_vectors = outputVectors[context_words_indices]
+    current_word_idx = tokens[currentWord]
+    current_word_input_vector = inputVectors[current_word_idx]
+
+    # STEP 1: call the binary cost and grad computer function for each per of:
+    # (current_input_word, context_output_word) and accumulate the costs and gradients
+    for context_word_idx in context_words_indices:
+        partial_cost, partial_gradIn, partial_gradOut = word2vecCostAndGradient(predicted=current_word_input_vector,
+                                                                                target=context_word_idx,
+                                                                                outputVectors=outputVectors,
+                                                                                dataset=dataset)
+        # SHAPES:
+        # partial_cost : 1 x 1, scalar
+        # pratial_gradIn : 1 x D --> we update only one row : the current_word_input_vector
+        # partial_gradOut : |V| x D --> we update all output vectors rows; However in the case of negSamplingCostAndGradient,
+        #                               If we knew which words were choosen as negative we could have reduce the size of
+        #                               This partial_gradOut to N+1 x D : where N is the number of negative sample
+        #                               The extra +1 been added to take into account the gradient of the true context outvector
+
+        cost += partial_cost
+        gradIn[current_word_idx]+= partial_gradIn
+        gradOut += partial_gradOut
     ### END YOUR CODE
 
     return cost, gradIn, gradOut
