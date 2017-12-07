@@ -49,7 +49,8 @@ def getSentenceFeatures(tokens, wordVectors, sentence):
     sentVector = np.zeros((wordVectors.shape[1],))
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+    words_indices = [tokens[word] for word in sentence]
+    sentVector = np.mean(wordVectors[words_indices], axis=0, keepdims=False)
     ### END YOUR CODE
 
     assert sentVector.shape == (wordVectors.shape[1],)
