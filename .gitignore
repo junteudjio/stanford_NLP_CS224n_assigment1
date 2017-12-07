@@ -1,3 +1,26 @@
+# saved models
+*.npy
+.mypy_cache/
+assignment1/utils/datasets/
+assignment1/q3_word_vectors.png
+assignment1/q4_dev_conf.png
+assignment1/q4_dev_pred.txt
+assignment1/q4_reg_v_acc.png
+assignment1/saved_params_10000.npy
+assignment1/saved_params_15000.npy
+assignment1/saved_params_20000.npy
+assignment1/saved_params_25000.npy
+assignment1/saved_params_30000.npy
+assignment1/saved_params_35000.npy
+assignment1/saved_params_40000.npy
+assignment1/saved_params_5000.npy
+
+# dowloaded datasets
+assigment1/utils/datasets/
+
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -8,6 +31,7 @@ __pycache__/
 
 # Idea
 .idea/
+.idea/workspace.xml
 
 # Distribution / packaging
 .Python
