@@ -64,7 +64,7 @@ def getRegularizationValues():
     """
     values = None   # Assign a list of floats in the block below
     ### YOUR CODE HERE
-    values = [pow(10,-x) for x in xrange(10)]
+    values = [pow(10,-x) for x in xrange(-3, 10)]
     values.append(0)
     return sorted(values)
 
@@ -237,7 +237,7 @@ def main(args):
     print "Test accuracy (%%): %f" % bestResult["test"]
 
     # do some error analysis
-    if args.pretrained:
+    if args.yourvectors:
         plotRegVsAccuracy(regValues, results, "q4_reg_v_acc.png")
         outputConfusionMatrix(devFeatures, devLabels, bestResult["clf"],
                               "q4_dev_conf.png")
