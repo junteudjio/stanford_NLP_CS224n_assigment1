@@ -10,7 +10,7 @@ In this assignment we have implemented the followings using python + numpy:
 Apart from the coding questions, this assignment also has many mathematical questions involving:
 - Deriving word vectors' gradients for 4 different flavours of the word2vec model (skip-gram vs cbow;  softmax loss vs negsample loss)
 - Deriving the computational complexity of each flavour.
-- You can find my (typed, correct and more detailed) solutions here:  [CS224n_written_sections_solutions](https://github.com/junteudjio/stanford_NLP_CS224n_written_sections_solutions)
+- You can find my (handwritten, correct and more detailed) solutions here:  [CS224n_written_sections_solutions](https://github.com/junteudjio/stanford_NLP_CS224n_written_sections_solutions)
 
 
 ## Contributors
